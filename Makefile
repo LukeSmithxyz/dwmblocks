@@ -7,3 +7,4 @@ clean:
 install: output
 	mkdir -p /usr/local/bin
 	cp -f dwmblocks /usr/local/bin
+	chmod 755 /usr/local/bin/dwmblocks
