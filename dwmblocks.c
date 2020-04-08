@@ -33,10 +33,6 @@ static Window root;
 static char statusbar[LENGTH(blocks)][50] = {0};
 static char statusstr[256];
 static char *statuscat;
-static const char *volupcmd[]  = { "volup", NULL };
-static const char *voldowncmd[]  = { "voldown", NULL };
-static const char *volmutecmd[]  = { "volmute", NULL };
-static int statusContinue = 1,volmuted = 0;
 
 void replace(char *str, char old, char new)
 {
