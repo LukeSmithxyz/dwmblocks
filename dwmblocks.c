@@ -33,7 +33,7 @@ static Window root;
 static char statusbar[LENGTH(blocks)][50] = {0};
 static char statusstr[256];
 static char *statuscat;
-
+static int statusContinue=1;
 void replace(char *str, char old, char new)
 {
 	int N = strlen(str);
