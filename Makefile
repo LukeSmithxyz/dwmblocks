@@ -5,7 +5,7 @@ output: dwmblocks.o
 dwmblocks.o: dwmblocks.c config.h
 	gcc -c -lX11 dwmblocks.c
 clean:
-	rm *.o *.gch dwmblocks
+	rm -f *.o *.gch dwmblocks
 install: output
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f dwmblocks $(DESTDIR)$(PREFIX)/bin
