@@ -7,13 +7,16 @@ static const Block blocks[] = {
 	/* {"",	"crypto",	0,	13}, */
 	{"",	"torrent",	20,	7},
 	{"",	"news",		0,	6},
+	/* {"",	"memory",	10,	14}, */
+	/* {"",	"cpu",		10,	13}, */
 	/* {"",	"moonphase",	18000,	5}, */
 	{"",	"weather",	18000,	5},
 	{"",	"mailbox",	180,	12},
-	{"",	"volume",	1,	0},
-	{"",	"battery | tr \'\n\' \' \'",	5,	0},
-	{"",	"clock",	60,	0},
+	{"",	"volume",	1,	10},
+	{"",	"battery | tr \'\n\' \' \'",	5,	3},
+	{"",	"clock",	60,	1},
 	{"",	"internet",	5,	4},
+	{"",	"help",		0,	15},
 };
 
 //sets delimeter between status commands. NULL character ('\0') means no delimeter.
