@@ -8,6 +8,7 @@
 #define CMDLENGTH		50
 
 typedef struct {
+	char* icon;
 	char* command;
 	unsigned int interval;
 	unsigned int signal;
@@ -55,6 +56,7 @@ void getcmd(const Block *block, char *output)
 		output[0] = block->signal;
 		output++;
 	}
+	strcpy(output, block->icon);
 	char* cmd;
 	FILE *cmdf;
 	if (button)
@@ -72,8 +74,10 @@ void getcmd(const Block *block, char *output)
 	}
 	if (!cmdf)
 		return;
-	fgets(output, CMDLENGTH, cmdf);
-	int i = strlen(output);
+	char c;
+	int i = strlen(block->icon);
+	fgets(output+i, CMDLENGTH-i, cmdf);
+	i = strlen(output);
 	if (delim != '\0' && i)
 		output[i++] = delim;
 	output[i++] = '\0';
