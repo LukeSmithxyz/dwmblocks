@@ -36,8 +36,6 @@ static int screen;
 static Window root;
 static char statusbar[LENGTH(blocks)][CMDLENGTH] = {0};
 static char statusstr[2][256];
-static char exportstring[CMDLENGTH + 22] = "export BLOCK_BUTTON=-;";
-static int button = 0;
 static int statusContinue = 1;
 static void (*writestatus) () = setroot;
 
@@ -71,21 +69,8 @@ void getcmd(const Block *block, char *output)
 		output++;
 	}
 	strcpy(output, block->icon);
-	char* cmd;
-	FILE *cmdf;
-	if (button)
-	{
-		cmd = strcat(exportstring, block->command);
-		cmd[20] = '0' + button;
-		button = 0;
-		cmdf = popen(cmd,"r");
-		cmd[22] = '\0';
-	}
-	else
-	{
-		cmd = block->command;
-		cmdf = popen(cmd,"r");
-	}
+	char *cmd = block->command;
+	FILE *cmdf = popen(cmd,"r");
 	if (!cmdf)
 		return;
 	char c;
@@ -136,6 +121,7 @@ void setupsignals()
 	sa.sa_sigaction = buttonhandler;
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGUSR1, &sa, NULL);
+	signal(SIGCHLD, SIG_IGN);
 
 }
 #endif
@@ -198,9 +184,29 @@ void sighandler(int signum)
 
 void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 {
-	button = si->si_value.sival_int & 0xff;
-	getsigcmds(si->si_value.sival_int >> 8);
+	int button = si->si_value.sival_int & 0xff;
+	sig = si->si_value.sival_int >> 8;
+	getsigcmds(sig);
 	writestatus();
+	if (fork() == 0)
+	{
+		static char exportstring[CMDLENGTH + 22] = "export BLOCK_BUTTON=-;";
+		const Block *current;
+		int i;
+		for (i = 0; i < LENGTH(blocks); i++)
+		{
+			current = blocks + i;
+			if (current->signal == sig)
+				break;
+		}
+		char *cmd = strcat(exportstring, blocks[i].command);
+		cmd[20] = '0' + button;
+		char *command[] = { "/bin/sh", "-c", cmd, NULL };
+		setsid();
+		execvp(command[0], command);
+		exit(EXIT_SUCCESS);
+		cmd[22] = '\0';
+	}
 }
 
 #endif
