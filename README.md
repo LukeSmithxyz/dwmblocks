@@ -15,7 +15,7 @@ So if you want my build out of the box, download those and put them in your
 `$PATH`. I do this to avoid redundancy in LARBS, both i3 and dwm use the same
 statusbar scripts.
 
-# Signalling changes
+# Signaling changes
 
 Most statusbars constantly rerun every script every several seconds to update.
 This is an option here, but a superior choice is giving your module a signal
