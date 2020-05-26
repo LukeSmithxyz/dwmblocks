@@ -184,29 +184,25 @@ void sighandler(int signum)
 
 void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 {
-	int button = si->si_value.sival_int & 0xff;
+	char button[2] = {'0' + si->si_value.sival_int & 0xff, '\0'};
 	sig = si->si_value.sival_int >> 8;
-	getsigcmds(sig);
-	writestatus();
 	if (fork() == 0)
 	{
-		static char exportstring[CMDLENGTH + 22] = "export BLOCK_BUTTON=-;";
 		const Block *current;
-		int i;
-		for (i = 0; i < LENGTH(blocks); i++)
+		for (int i = 0; i < LENGTH(blocks); i++)
 		{
 			current = blocks + i;
 			if (current->signal == sig)
 				break;
 		}
-		char *cmd = strcat(exportstring, blocks[i].command);
-		cmd[20] = '0' + button;
-		char *command[] = { "/bin/sh", "-c", cmd, NULL };
+		char *command[] = { "/bin/sh", "-c", current->command, NULL };
+		setenv("BLOCK_BUTTON", button, 1);
 		setsid();
 		execvp(command[0], command);
 		exit(EXIT_SUCCESS);
-		cmd[22] = '\0';
 	}
+	getsigcmds(sig);
+	writestatus();
 }
 
 #endif

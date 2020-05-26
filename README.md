@@ -42,5 +42,5 @@ scripts in response to click events.  See the above linked scripts for examples
 of this using the `$BLOCK_BUTTON` variable.
 
 For this feature to work, you need the appropriate patch in dwm as well. See
-[here](https://gist.github.com/danbyl/54f7c1d57fc6507242a95b71c3d8fdea).
+[here](https://dwm.suckless.org/patches/statuscmd/).
 Credit for those patches goes to Daniel Bylinka (daniel.bylinka@gmail.com).
