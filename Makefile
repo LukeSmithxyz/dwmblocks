@@ -1,4 +1,6 @@
-PREFIX ?= /usr/local
+.POSIX:
+
+PREFIX = /usr/local
 
 output: dwmblocks.o
 	gcc dwmblocks.o -lX11 -o dwmblocks
@@ -12,3 +14,5 @@ install: output
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/dwmblocks
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/dwmblocks
+
+.PHONY: clean install uninstall
