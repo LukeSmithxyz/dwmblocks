@@ -121,7 +121,11 @@ void setupsignals()
 	sa.sa_sigaction = buttonhandler;
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGUSR1, &sa, NULL);
-	signal(SIGCHLD, SIG_IGN);
+	struct sigaction sigchld_action = {
+  		.sa_handler = SIG_DFL,
+  		.sa_flags = SA_NOCLDWAIT
+	};
+	sigaction(SIGCHLD, &sigchld_action, NULL);
 
 }
 #endif
