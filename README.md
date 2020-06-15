@@ -35,6 +35,12 @@ Note that if you signal an unexpected signal to dwmblocks, it will probably
 crash. So if you disable a module, remember to also disable any cronjobs or
 other scripts that might signal to that module.
 
+If you are using `mutt-wizard` and calling `mailsync` without enabling the 
+`mailbox` module, `dwmblocks` will crash because `mailsync` tries to send 
+signals to `dwmblocks`. This typically happens when you set up the cron job
+to regularily call `mailsync`. You can either enable the `mailbox` module, or
+edit `mailsync` to not send the signals. 
+
 # Clickable modules
 
 Like i3blocks, this build allows you to build in additional actions into your
