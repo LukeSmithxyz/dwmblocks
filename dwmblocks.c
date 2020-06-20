@@ -194,6 +194,8 @@ void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 {
 	char button[2] = {'0' + si->si_value.sival_int & 0xff, '\0'};
 	sig = si->si_value.sival_int >> 8;
+	getsigcmds(sig);
+	writestatus();
 	if (fork() == 0)
 	{
 		const Block *current;
@@ -209,8 +211,6 @@ void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 		execvp(command[0], command);
 		exit(EXIT_SUCCESS);
 	}
-	getsigcmds(sig);
-	writestatus();
 }
 
 #endif
