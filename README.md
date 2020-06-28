@@ -1,4 +1,4 @@
-# dwmblocks
+# dwmblocks - fork from Luke's build
 
 Modular status bar for dwm written in c.
 
@@ -6,6 +6,12 @@ Modular status bar for dwm written in c.
 
 The statusbar is made from text output from commandline programs.  Blocks are
 added and removed by editing the config.h file.
+
+# My build
+
+The patches in the patch/ Directory did not work for me, so I removed them.
+Everything else is taken from Luke's build.
+
 
 # Luke's build
 
