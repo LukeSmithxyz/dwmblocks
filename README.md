@@ -47,5 +47,12 @@ Credit for those patches goes to Daniel Bylinka (daniel.bylinka@gmail.com).
 
 # There is a problem of slightly lagging
 
-so far I don't know the mechanism of this issue.
+if color scheme changing is send thourgh text like \x01 \x02 .
+and the copyvalidchars from rawstext to stext is set allow to pass them.
+then dwm will not like it, and lag the switching.
+
+but createing a new sibling for stext for example "ctext" in dwm
+wont cause it lag.
+
+
 
