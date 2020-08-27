@@ -51,13 +51,11 @@ void remove_all(char *str, char to_remove) {
 	char *read = str;
 	char *write = str;
 	while (*read) {
-		if (*read == to_remove) {
-			read++;
-			*write = *read;
-		}
+		if (*read == to_remove) write++
 		read++;
-		write++;
+		*write = *read;
 	}
+	*write = *read;
 }
 
 //opens process *cmd and stores output in *output
