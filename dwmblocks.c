@@ -193,6 +193,7 @@ void sighandler(int signum)
 void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 {
 	char button[2] = {'0' + si->si_value.sival_int & 0xff, '\0'};
+	pid_t process_id = getpid();
 	sig = si->si_value.sival_int >> 8;
 	if (fork() == 0)
 	{
@@ -203,14 +204,14 @@ void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 			if (current->signal == sig)
 				break;
 		}
-		char *command[] = { "/bin/sh", "-c", current->command, NULL };
+		char shcmd[1024];
+		sprintf(shcmd,"%s && kill -%d %d",current->command, current->signal+34,process_id);
+		char *command[] = { "/bin/sh", "-c", shcmd, NULL };
 		setenv("BLOCK_BUTTON", button, 1);
 		setsid();
 		execvp(command[0], command);
 		exit(EXIT_SUCCESS);
 	}
-	getsigcmds(sig);
-	writestatus();
 }
 
 #endif
