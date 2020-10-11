@@ -27,7 +27,7 @@ static const Block blocks[] = {
 	{"",	"help-icon",	0,	15},
 };
 
-//sets delimeter between status commands. NULL character ('\0') means no delimeter.
+//Sets delimiter between status commands. NULL character ('\0') means no delimiter.
 static char *delim = " ";
 
 // Have dwmblocks automatically recompile and run when you edit this file in
