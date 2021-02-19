@@ -111,6 +111,10 @@ void getsigcmds(int signal)
 void setupsignals()
 {
 	struct sigaction sa;
+
+	for(int i = SIGRTMIN; i <= SIGRTMAX; i++)
+		signal(i, SIG_IGN);
+
 	for(int i = 0; i < LENGTH(blocks); i++)
 	{
 		if (blocks[i].signal > 0)
