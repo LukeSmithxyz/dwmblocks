@@ -13,6 +13,7 @@ typedef struct {
 	unsigned int interval;
 	unsigned int signal;
 } Block;
+char** last_updates;
 void sighandler(int num);
 void buttonhandler(int sig, siginfo_t *si, void *ucontext);
 void replace(char *str, char old, char new);
@@ -61,7 +62,7 @@ void remove_all(char *str, char to_remove) {
 }
 
 //opens process *cmd and stores output in *output
-void getcmd(const Block *block, char *output)
+void getcmd(const Block *block, char* last_update , char *output)
 {
 	if (block->signal)
 	{
@@ -77,10 +78,15 @@ void getcmd(const Block *block, char *output)
 	int i = strlen(block->icon);
 	fgets(output+i, CMDLENGTH-(strlen(delim)+1), cmdf);
 	remove_all(output, '\n');
+	if(i == strlen(output))
+		strcpy(output+i, last_update);
+	else
+		strcpy(last_update, output+i);
+
 	i = strlen(output);
-    if ((i > 0 && block != &blocks[LENGTH(blocks) - 1]))
-        strcat(output, delim);
-    i+=strlen(delim);
+	if ((i > 0 && block != &blocks[LENGTH(blocks) - 1]))
+		strcat(output, delim);
+	i+=strlen(delim);
 	output[i++] = '\0';
 	pclose(cmdf);
 }
@@ -92,7 +98,7 @@ void getcmds(int time)
 	{
 		current = blocks + i;
 		if ((current->interval != 0 && time % current->interval == 0) || time == -1)
-			getcmd(current,statusbar[i]);
+			getcmd(current,last_updates[i],statusbar[i]);
 	}
 }
 
@@ -104,7 +110,7 @@ void getsigcmds(int signal)
 	{
 		current = blocks + i;
 		if (current->signal == signal)
-			getcmd(current,statusbar[i]);
+			getcmd(current,last_updates[i],statusbar[i]);
 	}
 }
 
@@ -176,6 +182,11 @@ void statusloop()
 #ifndef __OpenBSD__
 	setupsignals();
 #endif
+  last_updates = malloc(sizeof(char*) * LENGTH(blocks));
+  for(int i = 0; i < LENGTH(blocks); i++) {
+    last_updates[i] = malloc(sizeof(char) * CMDLENGTH);
+    strcpy(last_updates[i],"");
+  }
 	int i = 0;
 	getcmds(-1);
 	while(statusContinue)
@@ -222,6 +233,10 @@ void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 
 void termhandler(int signum)
 {
+  for(int i = 0; i < LENGTH(blocks); i++) {
+    free(last_updates[i]);
+  }
+  free(last_updates);
 	statusContinue = 0;
 	exit(0);
 }
