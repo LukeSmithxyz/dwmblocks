@@ -24,7 +24,7 @@ static const Block blocks[] = {
 	{"",	"sb-battery",	5,	3},
 	{"",	"sb-clock",	60,	1},
 	{"",	"sb-internet",	5,	4},
-	{"",	"sb-help-icon",	0,	15},
+	/* {"",	"sb-help-icon",	0,	15}, */
 };
 
 //Sets delimiter between status commands. NULL character ('\0') means no delimiter.
@@ -34,3 +34,4 @@ static char *delim = " ";
 // vim with the following line in your vimrc/init.vim:
 
 // autocmd BufWritePost ~/.local/src/dwmblocks/config.h !cd ~/.local/src/dwmblocks/; sudo make install && { killall -q dwmblocks;setsid dwmblocks & }
+
