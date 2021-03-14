@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<unistd.h>
+#include <time.h>
 #include<signal.h>
 #include<X11/Xlib.h>
 #define LENGTH(X)               (sizeof(X) / sizeof (X[0]))
@@ -91,8 +92,9 @@ void getcmds(int time)
 	for(int i = 0; i < LENGTH(blocks); i++)
 	{
 		current = blocks + i;
-		if ((current->interval != 0 && time % current->interval == 0) || time == -1)
+		if ((current->interval != 0 && time % current->interval == 0) || time == -1){
 			getcmd(current,statusbar[i]);
+        }
 	}
 }
 
@@ -103,8 +105,9 @@ void getsigcmds(int signal)
 	for (int i = 0; i < LENGTH(blocks); i++)
 	{
 		current = blocks + i;
-		if (current->signal == signal)
+		if (current->signal == signal){
 			getcmd(current,statusbar[i]);
+        }
 	}
 }
 
@@ -173,13 +176,27 @@ void statusloop()
 	setupsignals();
 #endif
 	int i = 0;
+	int previ = -1;
+    int gotscrewed = 0;
+    struct timespec sleeptime = {1, 0};
+    struct timespec left;
 	getcmds(-1);
 	while(statusContinue)
 	{
-		getcmds(i);
-		writestatus();
-		sleep(1.0);
-		i++;
+        if(i != previ){
+            getcmds(i);
+            writestatus();
+        }
+        gotscrewed = nanosleep(&sleeptime, &left);
+        previ = i;
+        /* long diff = (left.tv_sec + (left.tv_nsec + 500000000l) / 1000000000l); */
+        /* i += 1 - diff; */
+        if(gotscrewed != -1){
+            i++;
+        /* }else{ */
+        /*     printf("sec and nanosec left: %d, %d", left.tv_sec, left.tv_nsec); */
+        }
+
 	}
 }
 
