@@ -14,7 +14,3 @@ static const Block blocks[] = {
 	{"",	"battery",	5,	3},
 	{"",	"clock",	1,	1},
 };
-
-//sets delimeter between status commands. NULL character ('\0') means no delimeter.
-static char *delim = "|";
-

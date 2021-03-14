@@ -31,9 +31,7 @@ but is faster.  Just add 34 to your typical signal number.
 My volume module *never* updates on its own, instead I have this command run
 along side my volume shortcuts in dwm to only update it when relevant.
 
-Note that if you signal an unexpected signal to dwmblocks, it will probably
-crash. So if you disable a module, remember to also disable any cronjobs or
-other scripts that might signal to that module.
+Note that all modules must have different signal numbers.
 
 # Clickable modules
 
