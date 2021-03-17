@@ -60,6 +60,19 @@ void remove_all(char *str, char to_remove) {
     } while (*(read-1));
 }
 
+int gcd(int a, int b)
+{
+	int temp;
+	while (b > 0){
+		temp = a % b;
+
+		a = b;
+		b = temp;
+	}
+	return a;
+}
+
+
 //opens process *cmd and stores output in *output
 void getcmd(const Block *block, char *output)
 {
@@ -76,10 +89,10 @@ void getcmd(const Block *block, char *output)
     }
     char tmpstr[CMDLENGTH] = "";
     // TODO decide whether its better to use the last value till next time or just keep trying while the error was the interrupt
-    // this keeps trying to read if it got nothing and the error was and interrupt
-    // could also just read to a separate buffer and not move the data over if interrupted
-    // this way will take longer trying to complete 1 thing but will get it done
-    // the other way will move on to keep going with everything and the part that failed to read will be wrong till its updated again
+    // this keeps trying to read if it got nothing and the error was an interrupt
+    //  could also just read to a separate buffer and not move the data over if interrupted
+    //  this way will take longer trying to complete 1 thing but will get it done
+    //  the other way will move on to keep going with everything and the part that failed to read will be wrong till its updated again
     // either way you have to save the data to a temp buffer because when it fails it writes nothing and then then it gets displayed before this finishes
 	char * s;
     int e;
@@ -195,17 +208,25 @@ void statusloop()
 #ifndef __OpenBSD__
 	setupsignals();
 #endif
+    // first figure out the default wait interval by finding the
+    // greatest common denominator of the intervals
+    unsigned int interval = -1;
+    for(int i = 0; i < LENGTH(blocks); i++){
+        if(blocks[i].interval){
+            interval = gcd(blocks[i].interval, interval);
+        }
+    }
 	unsigned int i = 0;
-    int gotscrewed = 0;
-    struct timespec sleeptime = {1, 0};
+    int interrupted = 0;
+    struct timespec sleeptime = {interval, 0};
     struct timespec tosleep = sleeptime;
 	getcmds(-1);
 	while(statusContinue)
 	{
-        // sleep for tosleep (should be a sleeptime of 1s) and put what was left if interrupted back into tosleep
-        gotscrewed = nanosleep(&tosleep, &tosleep);
+        // sleep for tosleep (should be a sleeptime of interval seconds) and put what was left if interrupted back into tosleep
+        interrupted = nanosleep(&tosleep, &tosleep);
         // if interrupted then just go sleep again for the remaining time
-        if(gotscrewed == -1){
+        if(interrupted == -1){
             continue;
         }
         // if not interrupted then do the calling and writing
