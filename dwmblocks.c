@@ -97,11 +97,10 @@ void getcmd(const Block *block, char *output)
 	char * s;
     int e;
     do {
+        errno = 0;
         s = fgets(tmpstr, CMDLENGTH-(strlen(delim)+1), cmdf);
         e = errno;
     } while (!s && e == EINTR);
-    // this is equivalent but less readable and stuff
-    //while(!fgets(tmpstr, CMDLENGTH-(strlen(delim)+1), cmdf) && errno == EINTR);
 	pclose(cmdf);
 	int i = strlen(block->icon);
 	strcpy(output, block->icon);
