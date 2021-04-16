@@ -210,7 +210,7 @@ void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 		}
 		char shcmd[1024];
 		sprintf(shcmd,"%s && kill -%d %d",current->command, current->signal+34,process_id);
-		char *command[] = { "/bin/sh", "-c", shcmd, NULL };
+		char *command[] = { "/bin/env", shcmd, NULL };
 		setenv("BLOCK_BUTTON", button, 1);
 		setsid();
 		execvp(command[0], command);
