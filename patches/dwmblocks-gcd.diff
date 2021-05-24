@@ -1,0 +1,55 @@
+diff --git a/dwmblocks.c b/dwmblocks.c
+index 18f58fb..aaddd0d 100644
+--- a/dwmblocks.c
++++ b/dwmblocks.c
+@@ -38,6 +38,7 @@ static char statusbar[LENGTH(blocks)][CMDLENGTH] = {0};
+ static char statusstr[2][256];
+ static int statusContinue = 1;
+ static void (*writestatus) () = setroot;
++static int interval = -1;
+ 
+ void replace(char *str, char old, char new)
+ {
+@@ -182,7 +183,7 @@ void statusloop()
+ 	{
+ 		getcmds(i);
+ 		writestatus();
+-		sleep(1.0);
++		sleep(interval);
+ 		i++;
+ 	}
+ }
+@@ -226,6 +227,19 @@ void termhandler(int signum)
+ 	exit(0);
+ }
+ 
++static int gcd(int a, int b)
++{
++	int temp;
++	while (b > 0)
++	{
++		temp = a % b;
++
++		a = b;
++		b = temp;
++	}
++	return a;
++}
++
+ int main(int argc, char** argv)
+ {
+ 	for(int i = 0; i < argc; i++)
+@@ -235,6 +249,13 @@ int main(int argc, char** argv)
+ 		else if(!strcmp("-p",argv[i]))
+ 			writestatus = pstdout;
+ 	}
++
++	for (int i = 0; i < LENGTH(blocks); i++) {
++		if (blocks[i].interval != 0) {
++			interval = gcd(blocks[i].interval, interval);
++		}
++	}
++
+ 	signal(SIGTERM, termhandler);
+ 	signal(SIGINT, termhandler);
+ 	statusloop();
