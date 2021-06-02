@@ -53,11 +53,13 @@ void replace(char *str, char old, char new)
 void remove_all(char *str, char to_remove) {
 	char *read = str;
 	char *write = str;
-    do {
-        while (*read == to_remove) read++;
-        *write++ = *read;
-        read++;
-    } while (*(read-1));
+	while (*read) {
+		if (*read != to_remove) {
+			*write++ = *read;
+		}
+		++read;
+	}
+	*write = '\0';
 }
 
 int gcd(int a, int b)
