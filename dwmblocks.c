@@ -219,7 +219,7 @@ void statusloop()
     }
 	unsigned int i = 0;
     int interrupted = 0;
-    struct timespec sleeptime = {interval, 0};
+    const struct timespec sleeptime = {interval, 0};
     struct timespec tosleep = sleeptime;
 	getcmds(-1);
 	while(statusContinue)
@@ -234,7 +234,7 @@ void statusloop()
         getcmds(i);
         writestatus();
         // then increment since its actually been a second (plus the time it took the commands to run)
-        i++;
+        i += interval;
         // set the time to sleep back to the sleeptime of 1s
         tosleep = sleeptime;
 	}
