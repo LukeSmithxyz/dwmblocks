@@ -249,26 +249,11 @@ void sighandler(int signum)
 
 void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 {
-	char button[2] = {'0' + si->si_value.sival_int & 0xff, '\0'};
-	pid_t process_id = getpid();
-	sig = si->si_value.sival_int >> 8;
-	if (fork() == 0)
-	{
-		const Block *current;
-		for (int i = 0; i < LENGTH(blocks); i++)
-		{
-			current = blocks + i;
-			if (current->signal == sig)
-				break;
-		}
-		char shcmd[1024];
-		sprintf(shcmd,"%s && kill -%d %d",current->command, current->signal+34,process_id);
-		char *command[] = { "/bin/sh", "-c", shcmd, NULL };
-		setenv("BLOCK_BUTTON", button, 1);
-		setsid();
-		execvp(command[0], command);
-		exit(EXIT_SUCCESS);
-	}
+	int sival_int = si->si_value.sival_int;
+	char button[2] = {'0' + sival_int & 0xff, '\0'};
+	setenv("BLOCK_BUTTON", button, 1);
+	sighandler(((si->si_value.sival_int >> 8) & 0xff) + SIGRTMIN);
+	unsetenv("BLOCK_BUTTON");
 }
 
 #endif
