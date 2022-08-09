@@ -183,6 +183,14 @@ int getstatus(char *str, char *last)
 
 void setroot()
 {
+	/* block all signals until after root updated */
+	sigset_t new, old;
+	sigfillset(&new);
+	if (sigprocmask(SIG_SETMASK, &new, &old) < 0) {
+		perror("sigset");
+		exit(1);
+	}
+
 	if (!getstatus(statusstr[0], statusstr[1]))//Only set root if text has changed.
 		return;
 	Display *d = XOpenDisplay(NULL);
@@ -192,7 +200,10 @@ void setroot()
 	screen = DefaultScreen(dpy);
 	root = RootWindow(dpy, screen);
 	XStoreName(dpy, root, statusstr[0]);
-	XCloseDisplay(dpy);
+	XCloseDisplay(d);
+
+	/* restore signals to default */
+	sigprocmask(SIG_SETMASK, &old, NULL);
 }
 
 void pstdout()
