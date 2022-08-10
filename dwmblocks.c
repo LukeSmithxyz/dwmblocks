@@ -185,9 +185,9 @@ void setroot()
 {
 	/* block all signals until after root updated */
 	sigset_t new, old;
-	sigfillset(&new);
-	sigdelset(&new, SIGINT);
-	sigdelset(&new, SIGTERM);
+	for (unsigned int i = SIGRTMIN; i <= SIGRTMAX; i++) {
+		sigaddset(&new, i);
+	}
 
 	if (sigprocmask(SIG_SETMASK, &new, &old) < 0) {
 		perror("sigset");
