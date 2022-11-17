@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200112L
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -6,6 +8,8 @@
 #include <signal.h>
 #include <errno.h>
 #include <X11/Xlib.h>
+#include <pthread.h>
+#include <err.h>
 #define LENGTH(X) (sizeof(X) / sizeof (X[0]))
 #define CMDLENGTH		50
 
@@ -15,11 +19,15 @@ typedef struct {
 	unsigned int interval;
 	unsigned int signal;
 } Block;
+typedef struct Thread_ev {
+    const Block *block;
+    size_t idx;
+} Thread_ev;
 void sighandler(int num);
 void buttonhandler(int sig, siginfo_t *si, void *ucontext);
 void replace(char *str, char old, char new);
 void remove_all(char *str, char to_remove);
-void getcmds(int time);
+void getcmds(void);
 #ifndef __OpenBSD__
 void getsigcmds(int signal);
 void setupsignals();
@@ -38,7 +46,9 @@ static int screen;
 static Window root;
 static char statusbar[LENGTH(blocks)][CMDLENGTH] = {0};
 static char statusstr[2][256];
-static int statusContinue = 1;
+static volatile int statusContinue = 1;
+static pthread_mutex_t write_mut = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t cmd_mut = PTHREAD_MUTEX_INITIALIZER;
 static void (*writestatus) () = setroot;
 
 void replace(char *str, char old, char new)
@@ -62,22 +72,10 @@ void remove_all(char *str, char to_remove) {
 	*write = '\0';
 }
 
-int gcd(int a, int b)
-{
-	int temp;
-	while (b > 0){
-		temp = a % b;
-
-		a = b;
-		b = temp;
-	}
-	return a;
-}
-
-
 //opens process *cmd and stores output in *output
 void getcmd(const Block *block, char *output)
 {
+    pthread_mutex_lock(&cmd_mut);
 	if (block->signal)
 	{
 		output[0] = block->signal;
@@ -87,6 +85,7 @@ void getcmd(const Block *block, char *output)
 	FILE *cmdf = popen(cmd,"r");
 	if (!cmdf){
         //printf("failed to run: %s, %d\n", block->command, errno);
+        pthread_mutex_unlock(&cmd_mut);
 		return;
     }
     char tmpstr[CMDLENGTH] = "";
@@ -114,17 +113,28 @@ void getcmd(const Block *block, char *output)
     }
     i+=strlen(delim);
 	output[i++] = '\0';
+    pthread_mutex_unlock(&cmd_mut);
 }
 
-void getcmds(int time)
+static void syncwrite(void) {
+    pthread_mutex_lock(&write_mut);
+    writestatus();
+    pthread_mutex_unlock(&write_mut);
+}
+
+void threadEvent(union sigval data) {
+    Thread_ev *ev = (Thread_ev*) data.sival_ptr;
+    getcmd(ev->block, statusbar[ev->idx]);
+    syncwrite();
+}
+
+void getcmds(void)
 {
 	const Block* current;
 	for(int i = 0; i < LENGTH(blocks); i++)
 	{
 		current = blocks + i;
-		if ((current->interval != 0 && time % current->interval == 0) || time == -1){
-			getcmd(current,statusbar[i]);
-        }
+		getcmd(current,statusbar[i]);
 	}
 }
 
@@ -152,7 +162,13 @@ void setupsignals()
 	{
 		if (blocks[i].signal > 0)
 		{
-			signal(SIGRTMIN+blocks[i].signal, sighandler);
+            struct sigaction action;
+            sigemptyset(&action.sa_mask);
+            action.sa_flags = 0;
+            action.sa_handler = sighandler;
+
+            // Not checking if sigaction returns -1
+            sigaction(SIGRTMIN+blocks[i].signal, &action, NULL);
 			sigaddset(&sa.sa_mask, SIGRTMIN+blocks[i].signal);
 		}
 	}
@@ -199,7 +215,7 @@ void pstdout()
 {
 	if (!getstatus(statusstr[0], statusstr[1]))//Only write out if text has changed.
 		return;
-	printf("%s\n",statusstr[0]);
+    printf("%s\n",statusstr[0]);
 	fflush(stdout);
 }
 
@@ -211,33 +227,81 @@ void statusloop()
 #endif
     // first figure out the default wait interval by finding the
     // greatest common denominator of the intervals
-    unsigned int interval = -1;
-    for(int i = 0; i < LENGTH(blocks); i++){
-        if(blocks[i].interval){
-            interval = gcd(blocks[i].interval, interval);
+	setupsignals();
+	getcmds();
+
+    sigset_t blocked;
+    sigemptyset(&blocked);
+
+    timer_t timer_ids[LENGTH(blocks)];
+    Thread_ev evs[LENGTH(blocks)];
+
+    size_t timer_size = 0;
+    size_t ev_size = 0;
+
+    for(size_t i = 0; i < LENGTH(blocks); i++) {
+        const Block *current = blocks + i;
+        if(current->signal > 0) {
+            sigaddset(&blocked, current->signal);
         }
     }
-	unsigned int i = 0;
-    int interrupted = 0;
-    const struct timespec sleeptime = {interval, 0};
-    struct timespec tosleep = sleeptime;
-	getcmds(-1);
-	while(statusContinue)
-	{
-        // sleep for tosleep (should be a sleeptime of interval seconds) and put what was left if interrupted back into tosleep
-        interrupted = nanosleep(&tosleep, &tosleep);
-        // if interrupted then just go sleep again for the remaining time
-        if(interrupted == -1){
-            continue;
+
+    sigprocmask(SIG_BLOCK, &blocked, NULL);
+
+    for(size_t i = 0; i < LENGTH(blocks); i++) {
+        const Block *current = blocks + i;
+
+        timer_t t_id;
+        Thread_ev ev;
+
+        timer_ids[timer_size] = t_id;
+        evs[ev_size] = ev;
+
+
+        struct sigevent event;
+
+        if(current->signal == 0) {
+            evs[ev_size].block = current;
+            evs[ev_size].idx = i;
+
+            event.sigev_notify = SIGEV_THREAD;
+            event.sigev_value.sival_ptr = &evs[ev_size];
+            event.sigev_notify_function = threadEvent;
+        } else {
+            event.sigev_notify = SIGEV_SIGNAL;
+            event.sigev_signo = current->signal + SIGRTMIN;
         }
-        // if not interrupted then do the calling and writing
-        getcmds(i);
-        writestatus();
-        // then increment since its actually been a second (plus the time it took the commands to run)
-        i += interval;
-        // set the time to sleep back to the sleeptime of 1s
-        tosleep = sleeptime;
-	}
+
+        if(timer_create(CLOCK_REALTIME, &event, &timer_ids[timer_size]) == -1)
+            err(1, "Failed to create timer");
+
+
+        struct itimerspec inter;
+
+        inter.it_value.tv_sec = 1;
+        inter.it_value.tv_nsec = 0;
+
+        inter.it_interval.tv_sec = current->interval;
+        inter.it_interval.tv_nsec = 0;
+
+        if(timer_settime(timer_ids[timer_size], 0, &inter, NULL) == -1) {
+            err(1, "Failed to set timer");
+        }
+
+        timer_size++;
+        ev_size++;
+    }
+
+    sigprocmask(SIG_UNBLOCK, &blocked, NULL);
+
+    while(statusContinue) {
+        syncwrite();
+        pause();
+    }
+
+    for(size_t idx = 0; idx < timer_size; idx++) {
+        timer_delete(timer_ids[idx]);
+    }
 }
 
 #ifndef __OpenBSD__
