@@ -48,7 +48,6 @@ static char statusbar[LENGTH(blocks)][CMDLENGTH] = {0};
 static char statusstr[2][256];
 static volatile int statusContinue = 1;
 static pthread_mutex_t write_mut = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t cmd_mut = PTHREAD_MUTEX_INITIALIZER;
 static void (*writestatus) () = setroot;
 
 void replace(char *str, char old, char new)
@@ -75,7 +74,6 @@ void remove_all(char *str, char to_remove) {
 //opens process *cmd and stores output in *output
 void getcmd(const Block *block, char *output)
 {
-    pthread_mutex_lock(&cmd_mut);
 	if (block->signal)
 	{
 		output[0] = block->signal;
@@ -85,7 +83,6 @@ void getcmd(const Block *block, char *output)
 	FILE *cmdf = popen(cmd,"r");
 	if (!cmdf){
         //printf("failed to run: %s, %d\n", block->command, errno);
-        pthread_mutex_unlock(&cmd_mut);
 		return;
     }
     char tmpstr[CMDLENGTH] = "";
@@ -113,7 +110,6 @@ void getcmd(const Block *block, char *output)
     }
     i+=strlen(delim);
 	output[i++] = '\0';
-    pthread_mutex_unlock(&cmd_mut);
 }
 
 static void syncwrite(void) {
@@ -308,7 +304,7 @@ void statusloop()
 void sighandler(int signum)
 {
 	getsigcmds(signum-SIGRTMIN);
-	writestatus();
+    syncwrite();
 }
 
 void buttonhandler(int sig, siginfo_t *si, void *ucontext)
