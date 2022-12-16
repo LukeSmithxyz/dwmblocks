@@ -105,7 +105,13 @@ void getcmd(const Block *block, char *output)
     } while (!s && e == EINTR);
 	pclose(cmdf);
 	int i = strlen(block->icon);
-	strcpy(output, block->icon);
+
+    if (s && hideemptyblock || !hideemptyblock) {
+        strcpy(output, block->icon);
+    } else {
+        strcpy(output, "");
+    }
+
     strcpy(output+i, tmpstr);
 	remove_all(output, '\n');
 	i = strlen(output);
