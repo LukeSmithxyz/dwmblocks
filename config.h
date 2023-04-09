@@ -4,12 +4,9 @@ static const Block blocks[] = {
 	/* {"⌨", "sb-kbselect", 0, 30}, */
 	{"", "cat /tmp/recordingicon 2>/dev/null",	0,	9},
 	{"",	"sb-tasks",	10,	26},
-	{"",	"sb-music",	0,	11},
+	/* {"",	"sb-music",	0,	11}, */
 	{"",	"sb-pacpackages",	0,	8},
 	{"",	"sb-news",		0,	6},
-	/* {"",	"sb-price lbc \"LBRY Token\" 📚 22",			9000,	22}, */
-	/* {"",	"sb-price bat \"Basic Attention Token\" 🦁 20",	9000,	20}, */
-	/* {"",	"sb-price link Chainlink 🔗 25",			300,	25}, */
 	/* {"",	"sb-price xmr Monero 🔒 24",			9000,	24}, */
 	/* {"",	"sb-price eth Ethereum 🍸 23",	9000,	23}, */
 	/* {"",	"sb-price btc Bitcoin 💰 21",				9000,	21}, */
