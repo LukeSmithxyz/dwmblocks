@@ -1,10 +1,12 @@
 .POSIX:
 
 PREFIX = /usr/local
+CFLAGS = -Wall -Wextra -std=c99 -pedantic -O2
+LDFLAGS = -lX11 -lrt
 CC = gcc
 
 dwmblocks: dwmblocks.o
-	$(CC) dwmblocks.o -lX11 -o dwmblocks
+	$(CC) dwmblocks.o $(CFLAGS) $(LDFLAGS) -o dwmblocks
 dwmblocks.o: dwmblocks.c config.h
 	$(CC) -c dwmblocks.c
 clean:
