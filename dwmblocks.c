@@ -16,6 +16,7 @@ typedef struct {
 	unsigned int interval;
 	unsigned int signal;
 } Block;
+
 void sighandler(int num);
 void buttonhandler(int sig, siginfo_t *si, void *ucontext);
 void replace(char *str, char old, char new);
@@ -34,13 +35,12 @@ void termhandler(int signum);
 static Display *dpy;
 static int screen;
 static Window root;
-static char statusbar[LENGTH(blocks)][CMDLENGTH] = {0};
+static char statusbar[LENGTH(blocks)][CMDLENGTH] = { 0 };
 static char statusstr[2][256];
 static int statusContinue = 1;
 static void (*writestatus) () = setroot;
 
-void replace(char *str, char old, char new)
-{
+void replace(char *str, char old, char new) {
 	for(char * c = str; *c; c++)
 		if(*c == old)
 			*c = new;
@@ -63,7 +63,7 @@ void remove_all(char *str, char to_remove) {
 int gcd(int a, int b)
 {
 	int temp;
-	while (b > 0){
+	while (b > 0) {
 		temp = a % b;
 
 		a = b;
@@ -75,14 +75,13 @@ int gcd(int a, int b)
 // Opens process *cmd and stores output in *output
 void getcmd(const Block *block, char *output)
 {
-	if (block->signal)
-	{
+	if (block->signal) {
 		output[0] = block->signal;
 		output++;
 	}
 	char *cmd = block->command;
 	FILE *cmdf = popen(cmd,"r");
-	if (!cmdf){
+	if (!cmdf) {
 		// printf("failed to run: %s, %d\n", block->command, errno);
 		return;
 	}
@@ -106,7 +105,7 @@ void getcmd(const Block *block, char *output)
 	strcpy(output+i, tmpstr);
 	remove_all(output, '\n');
 	i = strlen(output);
-	if ((i > 0 && block != &blocks[LENGTH(blocks) - 1])){
+	if ((i > 0 && block != &blocks[LENGTH(blocks) - 1])) {
 		strcat(output, delim);
 	}
 	i+=strlen(delim);
@@ -116,11 +115,10 @@ void getcmd(const Block *block, char *output)
 void getcmds(int time)
 {
 	const Block* current;
-	for(int i = 0; i < LENGTH(blocks); i++)
-	{
+	for(int i = 0; i < LENGTH(blocks); i++) {
 		current = blocks + i;
-		if ((current->interval != 0 && time % current->interval == 0) || time == -1){
-			getcmd(current,statusbar[i]);
+		if ((current->interval != 0 && time % current->interval == 0) || time == -1) {
+			getcmd(current, statusbar[i]);
 		}
 	}
 }
@@ -129,10 +127,9 @@ void getcmds(int time)
 void getsigcmds(int signal)
 {
 	const Block *current;
-	for (int i = 0; i < LENGTH(blocks); i++)
-	{
+	for (int i = 0; i < LENGTH(blocks); i++) {
 		current = blocks + i;
-		if (current->signal == signal){
+		if (current->signal == signal) {
 			getcmd(current,statusbar[i]);
 		}
 	}
@@ -145,10 +142,8 @@ void setupsignals()
 	for(int i = SIGRTMIN; i <= SIGRTMAX; i++)
 		signal(i, SIG_IGN);
 
-	for(int i = 0; i < LENGTH(blocks); i++)
-	{
-		if (blocks[i].signal > 0)
-		{
+	for(int i = 0; i < LENGTH(blocks); i++) {
+		if (blocks[i].signal > 0) {
 			signal(SIGRTMIN+blocks[i].signal, sighandler);
 			sigaddset(&sa.sa_mask, SIGRTMIN+blocks[i].signal);
 		}
@@ -208,22 +203,22 @@ void statusloop()
 	// First figure out the default wait interval by finding the
 	// greatest common denominator of the intervals
 	unsigned int interval = -1;
-	for(int i = 0; i < LENGTH(blocks); i++){
-		if(blocks[i].interval){
+	for(int i = 0; i < LENGTH(blocks); i++) {
+		if(blocks[i].interval) {
 			interval = gcd(blocks[i].interval, interval);
 		}
 	}
+
 	unsigned int i = 0;
 	int interrupted = 0;
 	const struct timespec sleeptime = {interval, 0};
 	struct timespec tosleep = sleeptime;
 	getcmds(-1);
-	while(statusContinue)
-	{
+	while(statusContinue) {
 		// Sleep for tosleep (should be a sleeptime of interval seconds) and put what was left if interrupted back into tosleep
 		interrupted = nanosleep(&tosleep, &tosleep);
 		// If interrupted then just go sleep again for the remaining time
-		if(interrupted == -1){
+		if(interrupted == -1) {
 			continue;
 		}
 		// If not interrupted then do the calling and writing
@@ -248,11 +243,9 @@ void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 	char button[2] = {'0' + si->si_value.sival_int & 0xff, '\0'};
 	pid_t process_id = getpid();
 	sig = si->si_value.sival_int >> 8;
-	if (fork() == 0)
-	{
+	if (fork() == 0) {
 		const Block *current;
-		for (int i = 0; i < LENGTH(blocks); i++)
-		{
+		for (int i = 0; i < LENGTH(blocks); i++) {
 			current = blocks + i;
 			if (current->signal == sig)
 				break;
@@ -276,8 +269,7 @@ void termhandler(int signum)
 
 int main(int argc, char** argv)
 {
-	for(int i = 0; i < argc; i++)
-	{
+	for(int i = 0; i < argc; i++) {
 		if (!strcmp("-d", argv[i]))
 			delim = argv[++i];
 		else if(!strcmp("-p",argv[i]))
