@@ -42,3 +42,12 @@ of this using the `$BLOCK_BUTTON` variable.
 For this feature to work, you need the appropriate patch in dwm as well. See
 [here](https://dwm.suckless.org/patches/statuscmd/).
 Credit for those patches goes to Daniel Bylinka (daniel.bylinka@gmail.com).
+
+# Auto-compilation via Vim
+
+Have dwmblocks automatically recompile and run when you edit this file in
+vim with the following line in your vimrc/init.vim:
+```vim
+autocmd BufWritePost ~/.local/src/dwmblocks/config.h !cd ~/.local/src/dwmblocks/
+sudo make install && { killall -q dwmblocks; setsid dwmblocks & }
+```
