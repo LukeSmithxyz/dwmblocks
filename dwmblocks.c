@@ -19,20 +19,19 @@ typedef struct {
 
 #include "config.h"
 
-void sighandler(int num);
-void buttonhandler(int sig, siginfo_t *si, void *ucontext);
+void buttonHandler(int sig, siginfo_t *si, void *ucontext);
 void replace(char *str, char old, char new);
-void remove_all(char *str, char to_remove);
+void removeAll(char *str, char target);
 void updateStatusMessages(int time);
 #ifndef __OpenBSD__
 void updateStatusMessagesBySignal(int signal);
 void setupSignals();
-void sighandler(int signum);
+void sigHandler(int signum);
 #endif
 void updateWindowName();
-void statusloop();
+void updateStatusIndefinitely();
 int calculateUpdateInterval();
-void termhandler(int signum);
+void termHandler(int signum);
 
 static char statusMessages[LENGTH(blocks)][MAX_CMD_OUTPUT_LENGTH] = { 0 };
 static char statusBarOutput[MAX_STATUS_LENGTH];
@@ -46,13 +45,12 @@ void replace(char *str, char old, char new) {
 			*c = new;
 }
 
-// The previous function looked nice but unfortunately it didnt work if to_remove was in any position other than the last character
-// theres probably still a better way of doing this
-void remove_all(char *str, char to_remove) {
+void removeAll(char *str, char target) {
 	char *read = str;
 	char *write = str;
+
 	while (*read) {
-		if (*read != to_remove) {
+		if (*read != target) {
 			*write++ = *read;
 		}
 		++read;
@@ -76,14 +74,13 @@ void setStatusBlock(const Block *block, char *output, char* cmdOutput) {
 	int statusLength = strlen(block->icon);
 	strcpy(output, block->icon);
 	strcpy(output + statusLength, cmdOutput);
-	remove_all(output, '\n');
+	removeAll(output, '\n');
 	statusLength = strlen(output);
 
 	int isNotLastBlock = block != &blocks[LENGTH(blocks) - 1];
 	int shouldAddDelim = statusLength > 0 && isNotLastBlock;
 	if (shouldAddDelim) {
 		strcat(output, delim);
-		// XXX: This line was outside the if block. Please test it.
 		statusLength += strlen(delim);
 	}
 	output[statusLength++] = '\0';
@@ -165,11 +162,11 @@ void setupSignals()
 
 	for (int i = 0; i < LENGTH(blocks); i++) {
 		if (blocks[i].signal > 0) {
-			signal(SIGRTMIN+blocks[i].signal, sighandler);
+			signal(SIGRTMIN+blocks[i].signal, sigHandler);
 			sigaddset(&sa.sa_mask, SIGRTMIN+blocks[i].signal);
 		}
 	}
-	sa.sa_sigaction = buttonhandler;
+	sa.sa_sigaction = buttonHandler;
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGUSR1, &sa, NULL);
 	struct sigaction sigchld_action = {
@@ -222,7 +219,7 @@ void pstdout()
 	fflush(stdout);
 }
 
-void statusloop()
+void updateStatusIndefinitely()
 {
 #ifndef __OpenBSD__
 	setupSignals();
@@ -264,36 +261,41 @@ int calculateUpdateInterval() {
 }
 
 #ifndef __OpenBSD__
-void sighandler(int signum)
+void sigHandler(int signum)
 {
 	updateStatusMessagesBySignal(signum - SIGRTMIN);
 	writeStatus();
 }
 
-void buttonhandler(int sig, siginfo_t *si, void *ucontext)
+void buttonHandler(int sig, siginfo_t *si, void *ucontext)
 {
-	char button[2] = {'0' + si->si_value.sival_int & 0xff, '\0'};
+	char button[2] = { '0' + si->si_value.sival_int & 0xff, '\0' };
 	pid_t process_id = getpid();
 	sig = si->si_value.sival_int >> 8;
-	if (fork() == 0) {
-		const Block *current;
-		for (int i = 0; i < LENGTH(blocks); i++) {
-			current = blocks + i;
-			if (current->signal == sig)
-				break;
-		}
-		char shcmd[1024];
-		sprintf(shcmd,"%s && kill -%d %d",current->command, current->signal+34,process_id);
-		char *command[] = { "/bin/sh", "-c", shcmd, NULL };
-		setenv("BLOCK_BUTTON", button, 1);
-		setsid();
-		execvp(command[0], command);
-		exit(EXIT_SUCCESS);
+
+	if (fork() != 0) {
+		return;
 	}
+
+	const Block *current;
+	for (int i = 0; i < LENGTH(blocks); i++) {
+		current = blocks + i;
+		if (current->signal == sig)
+			break;
+	}
+
+	char shCmd[1024];
+	sprintf(shCmd, "%s && kill -%d %d", current->command, current->signal+34, process_id);
+
+	char *command[] = { "/bin/sh", "-c", shCmd, NULL };
+	setenv("BLOCK_BUTTON", button, 1);
+	setsid();
+	execvp(command[0], command);
+	exit(EXIT_SUCCESS);
 }
 #endif
 
-void termhandler(int signum)
+void termHandler(int signum)
 {
 	statusContinue = 0;
 	exit(0);
@@ -304,12 +306,12 @@ int main(int argc, char** argv)
 	for (int i = 0; i < argc; i++) {
 		if (!strcmp("-d", argv[i]))
 			delim = argv[++i];
-		else if (!strcmp("-p",argv[i]))
+		else if (!strcmp("-p", argv[i]))
 			writeStatus = pstdout;
 	}
 
-	signal(SIGTERM, termhandler);
-	signal(SIGINT, termhandler);
+	signal(SIGTERM, termHandler);
+	signal(SIGINT, termHandler);
 
-	statusloop();
+	updateStatusIndefinitely();
 }
