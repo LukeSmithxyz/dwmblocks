@@ -1,29 +1,14 @@
 //Modify this file to change what commands output to your statusbar, and recompile using the make command.
 static const Block blocks[] = {
-	/*Icon*/	/*Command*/		/*Update Interval*/	/*Update Signal*/
-	/* {"⌨", "sb-kbselect", 0, 30}, */
-	{"", "cat /tmp/recordingicon 2>/dev/null",	0,	9},
-	{"",	"sb-tasks",	10,	26},
-	/* {"",	"sb-music",	0,	11}, */
-	{"",	"sb-pacpackages",	0,	8},
-	{"",	"sb-news",		0,	6},
-	/* {"",	"sb-price xmr Monero 🔒 24",			9000,	24}, */
-	/* {"",	"sb-price eth Ethereum 🍸 23",	9000,	23}, */
-	/* {"",	"sb-price btc Bitcoin 💰 21",				9000,	21}, */
-	{"",	"sb-torrent",	20,	7},
-	/* {"",	"sb-memory",	10,	14}, */
-	/* {"",	"sb-cpu",		10,	18}, */
-	/* {"",	"sb-moonphase",	18000,	17}, */
-	{"",	"sb-doppler",	0,	13},
-	{"",	"sb-forecast",	18000,	5},
-	{"",	"sb-mailbox",	180,	12},
-	{"",	"sb-nettraf",	1,	16},
-	{"",	"sb-volume",	0,	10},
-	{"",	"sb-battery",	5,	3},
-	{"",	"sb-clock",	60,	1},
-	{"",	"sb-internet",	5,	4},
-	/* {"",	"sb-iplocate", 0,	27}, */
-	{"",	"sb-help-icon",	0,	15},
+	/*Icon*/	/*Command*/								/*Update Interval*/	/*Update Signal*/
+	{"",	"/home/akio/.config/dwmblocks/spotify.sh",			10,				7},
+	{"",	"/home/akio/.config/dwmblocks/network.sh",			10,				1},
+	{"",	"/home/akio/.config/dwmblocks/power.sh",			60,				2},
+	{"",	"/home/akio/.config/dwmblocks/backlight.sh",		10,				3},
+	{"",	"/home/akio/.config/dwmblocks/volume.sh",			5,				4},
+	{"",	"/home/akio/.config/dwmblocks/date.sh",				1200,			5},
+	{"",	"/home/akio/.config/dwmblocks/time.sh",				60,				6},
+	// {"",	"/home/akio/.config/dwmblocks/weather.sh",			3600,			2},
 };
 
 //Sets delimiter between status commands. NULL character ('\0') means no delimiter.
